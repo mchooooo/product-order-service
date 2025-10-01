@@ -8,7 +8,7 @@
 
 ---
 
-## 도메인 모델
+## 엔티티 설계
 
 - **Product**
     - `id (PK)`, `name`, `price`, `stock`, `status[ACTIVE|DISCONTINUED]`, `createdAt`, `updatedAt`
