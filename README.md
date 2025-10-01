@@ -30,7 +30,7 @@
 
 ---
 
-## 필수 비기능 요구사항
+## 비기능 요구사항
 
 - **멱등성**: 상품 서버가 `Idempotency-Key/requestId` 저장 → 동일 키 재요청 시 이전 결과 반환
 - **원자적 업데이트**: `UPDATE ... SET stock = stock - :qty WHERE id=:id AND stock >= :qty`
