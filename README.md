@@ -9,12 +9,12 @@
 ---
 ## 엔티티 설계, API 명세
 ### product-service
-  [product-service README.md]()
+  [product-service README.md](https://github.com/mchooooo/product-order-service/blob/main/product_service/README.md)
 ### order-service
-  [order-service README.md]()
+  [order-service README.md](https://github.com/mchooooo/product-order-service/blob/main/order_service/README.md)
   
 ---
-## 필수 기능 요구사항
+## 기능
 
 ### product-service
 
