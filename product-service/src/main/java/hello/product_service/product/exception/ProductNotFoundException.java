@@ -1,4 +1,4 @@
-package hello.product_service.exception;
+package hello.product_service.product.exception;
 
 public class ProductNotFoundException extends ApiException {
 

@@ -1,4 +1,4 @@
-package hello.product_service.exception;
+package hello.product_service.product.exception;
 
 public enum ErrorCode {
     PRODUCT_NOT_FOUND(404, "상품을 찾을 수 없습니다."),

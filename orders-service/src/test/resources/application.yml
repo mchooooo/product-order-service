@@ -1,0 +1,11 @@
+product:
+  base-url: http://localhost:8081
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true

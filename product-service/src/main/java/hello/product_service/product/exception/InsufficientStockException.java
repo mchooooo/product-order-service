@@ -1,4 +1,4 @@
-package hello.product_service.exception;
+package hello.product_service.product.exception;
 
 import java.util.Map;
 

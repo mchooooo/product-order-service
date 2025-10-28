@@ -1,0 +1,35 @@
+product:
+  base-url: http://localhost:8081
+
+spring:
+  datasource:
+    url: jdbc:h2:~/order
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  h2:
+    console:
+      path: /h2-console
+      enabled: true
+  jpa:
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+
+
+
+feign:
+  okhttp:
+    enable: true
+  client:
+    config:
+      productClient:              # @FeignClient(name="productClient") ??
+        connectTimeout: 2000
+        readTimeout: 3000
+        loggerLevel: BASIC        # NONE/BASIC/HEADERS/FULL
+logging:
+  level:
+    hello.orders_service.order.client: debug
