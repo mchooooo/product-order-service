@@ -1,7 +1,7 @@
 package hello.product_service.product.domain;
 
-import hello.product_service.product.model.StockResult;
 import jakarta.persistence.*;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @NoArgsConstructor
+@Getter
 public class StockLedger {
     @Id
     @GeneratedValue

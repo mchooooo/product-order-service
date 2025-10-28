@@ -1,6 +1,7 @@
 package hello.product_service.product.service;
 
 import hello.product_service.product.domain.Product;
+import hello.product_service.product.exception.InsufficientStockException;
 import hello.product_service.product.model.StockResult;
 import hello.product_service.product.repository.ProductRepository;
 import org.junit.jupiter.api.Test;
@@ -60,11 +61,12 @@ class InventoryServiceTest {
         int quantity = 200;
         String requestId = "test";
 
-        //when
-        StockResult result = inventoryService.decreaseByOrder(productId, orderId, quantity, requestId);
 
-        //then
-        assertThat(result.getRemainingStock()).isNull();
+        assertThatThrownBy(
+            ()-> inventoryService.decreaseByOrder(productId, orderId, quantity, requestId))
+            .isInstanceOf(InsufficientStockException.class);
+
+
     }
 
 

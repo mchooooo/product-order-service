@@ -1,6 +1,7 @@
 package hello.product_service.product.service;
 
 import hello.product_service.product.domain.ProductStatus;
+import hello.product_service.product.exception.ProductNotFoundException;
 import hello.product_service.product.model.ProductCreateRequest;
 import hello.product_service.product.model.ProductDto;
 import hello.product_service.product.model.ProductSearchCondition;

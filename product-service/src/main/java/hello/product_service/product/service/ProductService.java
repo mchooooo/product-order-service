@@ -1,6 +1,7 @@
 package hello.product_service.product.service;
 
 import hello.product_service.product.domain.Product;
+import hello.product_service.product.exception.ProductNotFoundException;
 import hello.product_service.product.model.ProductCreateRequest;
 import hello.product_service.product.model.ProductDto;
 import hello.product_service.product.model.ProductSearchCondition;
@@ -32,7 +33,7 @@ public class ProductService {
 
     @Transactional
     public ProductDto update(Long id, ProductDto productDto) {
-        Product findProduct = productRepository.findById(id).orElseThrow();
+        Product findProduct = productRepository.findById(id).orElseThrow(() -> new ProductNotFoundException(id));
         findProduct.update(productDto);
         return ProductDto.of(findProduct);
     }
@@ -45,12 +46,12 @@ public class ProductService {
 
     @Transactional(readOnly = true)
     public ProductDto findById(Long id) {
-        return ProductDto.of(productRepository.findById(id).orElseThrow());
+        return ProductDto.of(productRepository.findById(id).orElseThrow(() -> new ProductNotFoundException(id)));
     }
 
     @Transactional
     public void delete(Long id) {
-        Product findProduct = productRepository.findById(id).orElseThrow();
+        Product findProduct = productRepository.findById(id).orElseThrow(() -> new ProductNotFoundException(id));
         findProduct.delete();
         return;
     }

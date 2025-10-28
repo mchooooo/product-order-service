@@ -1,9 +1,11 @@
 package hello.product_service.product.api;
 
 import hello.product_service.common.ApiSuccess;
+import hello.product_service.product.domain.Direction;
 import hello.product_service.product.model.*;
 import hello.product_service.product.service.InventoryService;
 import hello.product_service.product.service.ProductService;
+import hello.product_service.product.service.StockLedgerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -18,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 public class ProductApiController {
     private final ProductService productService;
     private final InventoryService inventoryService;
-
+    private final StockLedgerService stockLedgerService;
     @PostMapping
     public ResponseEntity<ApiSuccess<ProductDto>> create(@RequestBody ProductCreateRequest productDto) {
         Long createdId = productService.create(productDto);
@@ -61,7 +63,11 @@ public class ProductApiController {
         @RequestBody OrderRequest orderRequest,
         @RequestHeader("Idempotency-Key") String idempotencyKey) {
 
+        // 재고 감소
         StockResult stockResult = inventoryService.decreaseByOrder(productId, orderRequest.getOrderId(), orderRequest.getQuantity(), idempotencyKey);
+        // 상품 원장 기록
+        stockLedgerService.save(productId, Direction.OUT, orderRequest.getQuantity(), orderRequest.getOrderId(), idempotencyKey);
+
         return ResponseEntity.ok(ApiSuccess.of(stockResult, null));
 
     }
@@ -72,7 +78,11 @@ public class ProductApiController {
         @RequestBody OrderRequest orderRequest,
         @RequestHeader("Idempotency-Key") String idempotencyKey) {
 
+        // 재고 증가
         StockResult stockResult = inventoryService.increaseByOrder(productId, orderRequest.getOrderId(), orderRequest.getQuantity(), idempotencyKey);
+
+        // 원장 기록
+        stockLedgerService.save(productId, Direction.IN, orderRequest.getQuantity(), orderRequest.getOrderId(), idempotencyKey);
         return ResponseEntity.ok(ApiSuccess.of(stockResult, null));
 
     }

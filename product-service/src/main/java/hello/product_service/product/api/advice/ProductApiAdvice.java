@@ -2,8 +2,8 @@ package hello.product_service.product.api.advice;
 
 import hello.product_service.common.ApiError;
 import hello.product_service.common.ApiErrorResponse;
-import hello.product_service.exception.ApiException;
-import hello.product_service.exception.ErrorCode;
+import hello.product_service.product.exception.ApiException;
+import hello.product_service.product.exception.ErrorCode;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
