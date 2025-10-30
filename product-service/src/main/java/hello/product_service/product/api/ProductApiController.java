@@ -63,10 +63,11 @@ public class ProductApiController {
         @RequestBody OrderRequest orderRequest,
         @RequestHeader("Idempotency-Key") String idempotencyKey) {
 
-        // 재고 감소
-        StockResult stockResult = inventoryService.decreaseByOrder(productId, orderRequest.getOrderId(), orderRequest.getQuantity(), idempotencyKey);
         // 상품 원장 기록
         stockLedgerService.save(productId, Direction.OUT, orderRequest.getQuantity(), orderRequest.getOrderId(), idempotencyKey);
+
+        // 재고 감소
+        StockResult stockResult = inventoryService.decreaseByOrder(productId, orderRequest.getOrderId(), orderRequest.getQuantity(), idempotencyKey);
 
         return ResponseEntity.ok(ApiSuccess.of(stockResult, null));
 
