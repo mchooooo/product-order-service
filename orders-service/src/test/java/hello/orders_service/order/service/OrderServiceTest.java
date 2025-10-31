@@ -1,6 +1,7 @@
 package hello.orders_service.order.service;
 
 import feign.FeignException;
+import hello.orders_service.common.ApiSuccess;
 import hello.orders_service.order.client.ProductClient;
 import hello.orders_service.order.client.dto.StockAdjustByOrderRequest;
 import hello.orders_service.order.client.dto.StockResult;
@@ -66,7 +67,8 @@ class OrderServiceTest {
         when(productClient.decreaseByOrder(anyLong(),
             any(StockAdjustByOrderRequest.class),
             anyString())
-        ).thenReturn(stockResult);
+        ).thenReturn(ApiSuccess.of(stockResult, null));
+
     }
 
     private void stubbingClientThrowException() {

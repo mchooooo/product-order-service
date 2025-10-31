@@ -21,9 +21,11 @@ spring:
 
 
 
-feign:
-  okhttp:
-    enable: true
+  cloud:
+    openfeign:
+      okhttp:
+        enabled: true
+
   client:
     config:
       productClient:              # @FeignClient(name="productClient") ??

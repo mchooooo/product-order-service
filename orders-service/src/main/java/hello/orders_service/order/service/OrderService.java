@@ -1,6 +1,7 @@
 package hello.orders_service.order.service;
 
 import feign.FeignException;
+import hello.orders_service.common.ApiSuccess;
 import hello.orders_service.order.client.ProductClient;
 import hello.orders_service.order.client.dto.StockAdjustByOrderRequest;
 import hello.orders_service.order.client.dto.StockResult;
@@ -54,7 +55,8 @@ public class OrderService {
 
         // 3. 익셉션 처리, 주문 서버 익셉션으로 추상화
         try {
-            StockResult stockResult = productClient.decreaseByOrder(productId, request, idempotencyKey);
+            ApiSuccess<StockResult> result = productClient.decreaseByOrder(productId, request, idempotencyKey);
+            StockResult stockResult = result.getData();
             log.info("stockResult = {}", stockResult);
             if (!stockResult.isSuccess()) {
                 createOrder.failStatus(stockResult.getMessage() != null ? stockResult.getMessage() : "STOCK_DECREASE_FAIL");
