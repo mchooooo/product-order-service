@@ -28,6 +28,8 @@ public class InventoryService {
         }
 
         // 차감 시작 (비즈니스 로직)
+        // todo : 동시 요청, 요청이 많을 경우 해결 법?,
+        // 힌트 : 디비 락?
         int updated = productRepository.decrement(productId, quantity);
         StockResult stockResult = null;
         Product updatedProduct = productRepository.findById(productId).orElseThrow();

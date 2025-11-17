@@ -45,6 +45,10 @@ public class OrderService {
 
     @Transactional
     public Order create(Long productId, String buyerId, int quantity) {
+        //todo : 프로덕트 서비스의 실패 시 오더 서비스와 프로덕트 서비스가 일관된 상태를 유지할 수 있도록 하는 방법 고민
+        //todo : ex) 해당 로직 실행 중 익셉션이 발생할 경우 프로덕트 서비스에는 재고가 차감되고, 오더 서비스는 익셉션으로 인해 롤백이 되면 일관성이 유지되지 않음
+        //todo : 힌트 -> 사가 패턴 도입, 서비스에 엮여있는 트랜잭션을 관리하고, 실패 시 보상 설계
+
         // 1. 주문 엔티티 생성
         Order createOrder = Order.create(productId, buyerId, quantity);
         orderRepository.save(createOrder);
