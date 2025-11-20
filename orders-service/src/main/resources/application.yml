@@ -26,12 +26,14 @@ spring:
       okhttp:
         enabled: true
 
-  client:
-    config:
-      productClient:              # @FeignClient(name="productClient") ??
-        connectTimeout: 2000
-        readTimeout: 3000
-        loggerLevel: BASIC        # NONE/BASIC/HEADERS/FULL
+      client:
+        config:
+          productClient:              # @FeignClient(name="productClient") ??
+            connectTimeout: 2000
+            readTimeout: 3000
+            loggerLevel: FULL        # NONE/BASIC/HEADERS/FULL
+            error-decoder: hello.orders_service.order.client.exception.decoder.ProductErrorDecoder
+
 logging:
   level:
     hello.orders_service.order.client: debug
