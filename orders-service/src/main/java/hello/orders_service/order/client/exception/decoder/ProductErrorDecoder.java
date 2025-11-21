@@ -5,9 +5,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.Response;
 import feign.codec.ErrorDecoder;
 import hello.orders_service.common.ApiError;
-import hello.orders_service.order.exception.ApiException;
 import hello.orders_service.order.exception.DependencyFailedException;
 import hello.orders_service.order.exception.ErrorCode;
+import hello.orders_service.order.exception.client.InsufficientStockException;
+import hello.orders_service.order.exception.client.ProductNotFoundException;
 
 import java.io.InputStream;
 
@@ -26,12 +27,12 @@ public class ProductErrorDecoder implements ErrorDecoder {
 
         // 400 INSUFFICIENT STOCK 예외 변환
         if ("INSUFFICIENT_STOCK".equals(code) && status == 400) {
-            return new ApiException(ErrorCode.INSUFFICIENT_STOCK, message, details);
+            return new InsufficientStockException(ErrorCode.INSUFFICIENT_STOCK, message, details, null);
         }
 
         // 404 PRODUCT NOT FOUND 예외 변환
         if ("PRODUCT_NOT_FOUND".equals(code) && status == 404) {
-            return new ApiException(ErrorCode.PRODUCT_NOT_FOUND, message, details);
+            return new ProductNotFoundException(ErrorCode.PRODUCT_NOT_FOUND, message, details, null);
         }
 
         // 500 호출 서버 실패 (재시도 대상)

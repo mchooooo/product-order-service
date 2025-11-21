@@ -2,14 +2,15 @@ package hello.orders_service.order.client.exception.decoder;
 
 import feign.Request;
 import feign.Response;
-import hello.orders_service.order.exception.ApiException;
 import hello.orders_service.order.exception.DependencyFailedException;
 import hello.orders_service.order.exception.ErrorCode;
+import hello.orders_service.order.exception.client.InsufficientStockException;
+import hello.orders_service.order.exception.client.ProductNotFoundException;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
-import java.util.Map;
+
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -29,8 +30,8 @@ class ProductErrorDecoderTest {
         Exception ex = decoder.decode("methodKey", resp);
 
         //then
-        assertThat(ex).isInstanceOf(ApiException.class);
-        ApiException ae = (ApiException) ex;
+        assertThat(ex).isInstanceOf(InsufficientStockException.class);
+        InsufficientStockException ae = (InsufficientStockException) ex;
         assertThat(ae.getCode()).isEqualTo(ErrorCode.INSUFFICIENT_STOCK);
         assertThat(ae.getMessage()).isEqualTo("재고가 부족합니다.");
     }
@@ -45,8 +46,8 @@ class ProductErrorDecoderTest {
 
         Exception ex = decoder.decode("methodKey", resp);
 
-        assertThat(ex).isInstanceOf(ApiException.class);
-        assertThat(((ApiException) ex).getCode()).isEqualTo(ErrorCode.PRODUCT_NOT_FOUND);
+        assertThat(ex).isInstanceOf(ProductNotFoundException.class);
+        assertThat(((ProductNotFoundException) ex).getCode()).isEqualTo(ErrorCode.PRODUCT_NOT_FOUND);
     }
 
     @Test
