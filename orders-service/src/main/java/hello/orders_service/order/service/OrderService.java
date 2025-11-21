@@ -7,10 +7,7 @@ import hello.orders_service.order.client.dto.StockAdjustByOrderRequest;
 import hello.orders_service.order.client.dto.StockResult;
 import hello.orders_service.order.domain.Order;
 import hello.orders_service.order.domain.OrderStatus;
-import hello.orders_service.order.exception.ApiException;
-import hello.orders_service.order.exception.DependencyFailedException;
-import hello.orders_service.order.exception.ErrorCode;
-import hello.orders_service.order.exception.OrderStateException;
+import hello.orders_service.order.exception.*;
 import hello.orders_service.order.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -85,6 +82,7 @@ public class OrderService {
 
     }
 
+
     @Transactional
     public Order cancel(Long orderId) {
         // 1. 취소할 주문 찾기
@@ -108,6 +106,31 @@ public class OrderService {
             throw new DependencyFailedException(ErrorCode.DEPENDENCY_FAILED, "상품 재고 복원 실패", null, e);
         }
 
+    }
+
+
+    @Transactional
+    public Order createOrderPending(Long productId, String buyerId, int quantity) {
+        Order o = Order.create(productId, buyerId, quantity);
+        orderRepository.save(o);
+        return o;
+    }
+
+    @Transactional
+    public Order confirmOrder(Long orderId) {
+        Order findOrder = orderRepository.findById(orderId).orElseThrow(() -> new OrderNotFoundException(ErrorCode.ORDER_NOT_FOUND, ErrorCode.ORDER_NOT_FOUND.getMessage(), null, null));
+
+        findOrder.confirmStatus();
+
+        return findOrder;
+    }
+
+    @Transactional
+    public Order failOrder(Long orderId, String message) {
+        Order findOrder = orderRepository.findById(orderId).orElseThrow(() -> new OrderNotFoundException(ErrorCode.ORDER_NOT_FOUND, ErrorCode.ORDER_NOT_FOUND.getMessage(), null, null));
+
+        findOrder.failStatus(message);
+        return findOrder;
     }
 
 }
