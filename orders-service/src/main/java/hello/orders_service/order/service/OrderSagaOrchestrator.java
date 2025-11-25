@@ -28,11 +28,18 @@ public class OrderSagaOrchestrator {
 
         // 멱등 키 생성
         String idemKey = "DEC-" + order.getId();
+        log.info("idempotency key = {}", idemKey);
 
         try {//tx2 : 주문 확정
             // 상품서버 호출
             StockAdjustByOrderRequest request = new StockAdjustByOrderRequest(order.getId(), quantity);
             productClient.decreaseByOrder(productId, request, idemKey);
+
+            // 보상 호출 테스트
+            if ("apiEx".equals(buyerId)) {
+                throw new ApiException(null, "test call");
+            }
+
             return orderService.confirmOrder(order.getId());
         } catch (ProductClientException ex) { // --- 업무 4xx: 보상 불필요(차감 안 됨 가정) ---
             // INSUFFICIENT_STOCK, PRODUCT_NOT_FOUND 등 클라이언트에서 익셉션이 온 경우
