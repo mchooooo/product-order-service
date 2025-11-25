@@ -40,12 +40,14 @@ public class OrderService {
         return orderRepository.findAll(pageable);
     }
 
+    /**
+     * orderV1
+     * 하나의 트랜잭션에서 서버 호출 및 주문 생성 모두 관리
+     * 상품 서버와 주문 서버의 일관성을 맞추기 어려울 수 있음 -> 재고 감소 호출 후 알 수 없는 익셉션 발생 시 주문은 생성되지 않음.
+     * orderV2 (사가패턴?) 도입
+     */
     @Transactional
     public Order create(Long productId, String buyerId, int quantity) {
-        //todo : 프로덕트 서비스의 실패 시 오더 서비스와 프로덕트 서비스가 일관된 상태를 유지할 수 있도록 하는 방법 고민
-        //todo : ex) 해당 로직 실행 중 익셉션이 발생할 경우 프로덕트 서비스에는 재고가 차감되고, 오더 서비스는 익셉션으로 인해 롤백이 되면 일관성이 유지되지 않음
-        //todo : 힌트 -> 사가 패턴 도입, 서비스에 엮여있는 트랜잭션을 관리하고, 실패 시 보상 설계
-
         // 1. 주문 엔티티 생성
         Order createOrder = Order.create(productId, buyerId, quantity);
         orderRepository.save(createOrder);
@@ -108,7 +110,9 @@ public class OrderService {
 
     }
 
-
+    /**
+     * orderV2 상품 서버와 주문 서버의 일관성을 맞추기 위해 OrderSagaOrchestrator 도입
+     */
     @Transactional
     public Order createOrderPending(Long productId, String buyerId, int quantity) {
         Order o = Order.create(productId, buyerId, quantity);
@@ -116,20 +120,33 @@ public class OrderService {
         return o;
     }
 
+    /**
+     * orderV2 상품 서버와 주문 서버의 일관성을 맞추기 위해 OrderSagaOrchestrator 도입
+     */
     @Transactional
     public Order confirmOrder(Long orderId) {
         Order findOrder = orderRepository.findById(orderId).orElseThrow(() -> new OrderNotFoundException(ErrorCode.ORDER_NOT_FOUND, ErrorCode.ORDER_NOT_FOUND.getMessage(), null, null));
-
         findOrder.confirmStatus();
-
         return findOrder;
     }
 
+    /**
+     * orderV2 상품 서버와 주문 서버의 일관성을 맞추기 위해 OrderSagaOrchestrator 도입
+     */
     @Transactional
     public Order failOrder(Long orderId, String message) {
         Order findOrder = orderRepository.findById(orderId).orElseThrow(() -> new OrderNotFoundException(ErrorCode.ORDER_NOT_FOUND, ErrorCode.ORDER_NOT_FOUND.getMessage(), null, null));
-
         findOrder.failStatus(message);
+        return findOrder;
+    }
+
+    /**
+     * orderV2 상품 서버와 주문 서버의 일관성을 맞추기 위해 OrderSagaOrchestrator 도입
+     */
+    @Transactional
+    public Order cancelOrder(Long orderId) {
+        Order findOrder = orderRepository.findById(orderId).orElseThrow(() -> new OrderNotFoundException(ErrorCode.ORDER_NOT_FOUND, ErrorCode.ORDER_NOT_FOUND.getMessage(), null, null));
+        findOrder.cancelStatus();
         return findOrder;
     }
 

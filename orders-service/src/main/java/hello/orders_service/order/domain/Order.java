@@ -2,6 +2,7 @@ package hello.orders_service.order.domain;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -10,6 +11,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "orders")
 @Getter
+@ToString
 public class Order {
     @Id
     @GeneratedValue

@@ -15,6 +15,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -31,6 +33,19 @@ class OrderServiceTest {
     @MockitoBean
     ProductClient productClient;
 
+
+    private void stubbingDecreaseByOrder(StockResult stockResult) {
+        when(productClient.decreaseByOrder(anyLong(),
+            any(StockAdjustByOrderRequest.class),
+            anyString())
+        ).thenReturn(ApiSuccess.of(stockResult, null));
+
+    }
+
+    private void stubbingClientThrowException() {
+        when(productClient.decreaseByOrder(anyLong(), any(StockAdjustByOrderRequest.class), anyString()))
+            .thenThrow(FeignException.class);
+    }
 
     @Test
     void create_success() {
@@ -59,20 +74,56 @@ class OrderServiceTest {
         assertThatThrownBy(() -> orderService.create(1L, "u-001", 1))
             .isInstanceOf(DependencyFailedException.class);
 
+    }
 
+    @Test
+    void create_order_pending_test() {
+        //given
+        //when
+        Order order = orderService.createOrderPending(1L, "test", 1);
+        List<Order> orders = orderRepository.findAll();
+
+        //then
+        assertThat(order.getStatus()).isEqualTo(OrderStatus.PENDING);
+        //테스트 데이터 2개는 삽입되어있고 하나 추가해서 3이 나와야한다.
+        assertThat(orders.size()).isEqualTo(3);
 
     }
 
-    private void stubbingDecreaseByOrder(StockResult stockResult) {
-        when(productClient.decreaseByOrder(anyLong(),
-            any(StockAdjustByOrderRequest.class),
-            anyString())
-        ).thenReturn(ApiSuccess.of(stockResult, null));
+    @Test
+    void confirm_order_test() {
+        //given
+        Order order = orderService.createOrderPending(1L, "test", 10);
 
+        //when
+        Order confirmOrder = orderService.confirmOrder(order.getId());
+
+        //then
+        assertThat(confirmOrder.getStatus()).isEqualTo(OrderStatus.CONFIRMED);
     }
 
-    private void stubbingClientThrowException() {
-        when(productClient.decreaseByOrder(anyLong(), any(StockAdjustByOrderRequest.class), anyString()))
-            .thenThrow(FeignException.class);
+    @Test
+    void fail_order_test() {
+        //given
+        Order order = orderService.createOrderPending(1L, "test", 10);
+
+        //when
+        Order failOrder = orderService.failOrder(order.getId(), "test fail");
+
+        //then
+        assertThat(failOrder.getStatus()).isEqualTo(OrderStatus.FAILED);
+        assertThat(failOrder.getFailReason()).isEqualTo("test fail");
+    }
+
+    @Test
+    void cancel_order_test() {
+        //given
+        Order order = orderService.createOrderPending(1L, "test", 10);
+
+        //when
+        Order cancelOrder = orderService.cancelOrder(order.getId());
+
+        //then
+        assertThat(cancelOrder.getStatus()).isEqualTo(OrderStatus.CANCEL);
     }
 }
