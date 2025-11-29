@@ -1,5 +1,6 @@
 package hello.product_service.product.domain;
 
+import hello.product_service.product.exception.InsufficientStockException;
 import hello.product_service.product.model.ProductDto;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -72,5 +73,13 @@ public class Product {
 
     public void delete() {
         this.status = ProductStatus.DELETE;
+    }
+
+    public void decreaseStock(int qty) {
+        if (this.stock - qty >= 0) {
+            this.stock -= qty;
+        } else {
+            throw new InsufficientStockException(this.id, this.stock);
+        }
     }
 }

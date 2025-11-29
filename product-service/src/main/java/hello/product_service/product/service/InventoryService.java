@@ -16,9 +16,15 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Transactional
 public class InventoryService {
+    private final StockLedgerService stockLedgerService;
     private final IdempotencyRepository idempotencyRepository;
     private final ProductRepository productRepository;
 
+    /**
+     * decreaseByOrder V1
+     * update 쿼리에서 (WHERE p.id=:productId AND p.stock >= :qty) 조건을 통해 갱신과 검증을 한 번에 수행 했으나 요청이 많아서 하나의 아이템에 다른 멱등성 키를 가지고 요청한 경우 방어 가능한가?
+     * 비관적 락 도입
+     */
     public StockResult decreaseByOrder(Long productId, Long orderId, int quantity, String requestId) {
         // 요청 아이디가 신규 값인지 조회
         IdempotencyRecord cached = idempotencyRepository.findByRequestId(requestId).orElse(null);
@@ -83,6 +89,47 @@ public class InventoryService {
 
             return idempotencyRepository.findByRequestId(requestId).map(StockResult::create).orElse(stockResult);
         }
+
+        return stockResult;
+    }
+
+    /**
+     * decreaseByOrder V2
+     * 재고 감소에서 비관적 락 도입
+     * @Lock(LockModeType.PESSIMISTIC_WRITE)
+     * 메서드 흐름
+     *  멱등성 검사 -> 존재하면 기존 값 리턴
+     *           -> 존재하지 않으면 상품에 락 걸고 검색 (SELECT ... FOR UPDATE) -> 재고 감소 실패 시 InsufficientStockException 던짐
+     *                                                                  -> 재고 감소 성공 시 재고 원장, 멱등성 저장 후 StockResult 리턴
+     *
+     * 고도화 아이디어 : 현재 코드는 모든 상품에 락이 걸림, 인기 있는 상품만 락을 걸 수 없을까?
+     */
+    public StockResult decreaseByOrderV2(Long productId, Long orderId, int quantity, String requestId) {
+        IdempotencyRecord cached = idempotencyRepository.findByRequestId(requestId).orElse(null);
+
+        if (cached != null) { //널이 아니면 기존에 존재
+            return StockResult.create(cached);
+        }
+
+        // 비즈니스 로직 시작
+        // 락 걸고 검색
+        Product findItem = productRepository.findForUpdateWithTimeout(productId);
+        // 재고 감소
+        findItem.decreaseStock(quantity); // 재고 부족 익셉션이 발생할 수 있음.
+        StockResult stockResult = new StockResult(true, findItem.getStock(), "OK");
+
+        // 재고 원장 저장 (성공한 아이템만)
+        stockLedgerService.save(productId, Direction.OUT, quantity, orderId, requestId);
+        // 멱등성 저장
+        try {
+            IdempotencyRecord idempotencyRecord = IdempotencyRecord.create(requestId, IdempotencyStatus.SUCCESS, stockResult.getMessage(), stockResult.getRemainingStock());
+            idempotencyRepository.save(idempotencyRecord);
+        } catch (DataIntegrityViolationException e) { //유니크 제약 위반, 동시에 삽입될 경우
+            // 드물지만 동일한 멱등성 키를 가지고 요청이 들어온 경우
+            // concurrent save -> 기존 레코드 반환
+            return idempotencyRepository.findByRequestId(requestId).map(StockResult::create).orElse(stockResult);
+        }
+
 
         return stockResult;
     }

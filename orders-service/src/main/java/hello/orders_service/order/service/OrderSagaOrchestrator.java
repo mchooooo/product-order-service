@@ -2,6 +2,7 @@ package hello.orders_service.order.service;
 
 import hello.orders_service.order.client.ProductClient;
 import hello.orders_service.order.client.dto.StockAdjustByOrderRequest;
+import hello.orders_service.order.client.dto.StockResult;
 import hello.orders_service.order.domain.Order;
 import hello.orders_service.order.domain.OrderStatus;
 import hello.orders_service.order.exception.ApiException;
@@ -33,7 +34,7 @@ public class OrderSagaOrchestrator {
         try {//tx2 : 주문 확정
             // 상품서버 호출
             StockAdjustByOrderRequest request = new StockAdjustByOrderRequest(order.getId(), quantity);
-            productClient.decreaseByOrder(productId, request, idemKey);
+            StockResult stockResult = productClient.decreaseByOrder(productId, request, idemKey).getData();
 
             // 보상 호출 테스트
             if ("apiEx".equals(buyerId)) {

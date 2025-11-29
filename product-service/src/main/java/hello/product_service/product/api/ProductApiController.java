@@ -57,8 +57,8 @@ public class ProductApiController {
         return ResponseEntity.noContent().build();
     }
 
-    @PatchMapping("/{productId}/stock/decrease-by-order")
-    public ResponseEntity<ApiSuccess<StockResult>> decreaseByOrder(
+    @PatchMapping("/{productId}/stock/v1/decrease-by-order")
+    public ResponseEntity<ApiSuccess<StockResult>> decreaseByOrderV1(
         @PathVariable("productId") Long productId,
         @RequestBody OrderRequest orderRequest,
         @RequestHeader("Idempotency-Key") String idempotencyKey) {
@@ -68,6 +68,19 @@ public class ProductApiController {
 
         // 재고 감소
         StockResult stockResult = inventoryService.decreaseByOrder(productId, orderRequest.getOrderId(), orderRequest.getQuantity(), idempotencyKey);
+
+        return ResponseEntity.ok(ApiSuccess.of(stockResult, null));
+
+    }
+
+    @PatchMapping("/{productId}/stock/decrease-by-order")
+    public ResponseEntity<ApiSuccess<StockResult>> decreaseByOrderV2(
+        @PathVariable("productId") Long productId,
+        @RequestBody OrderRequest orderRequest,
+        @RequestHeader("Idempotency-Key") String idempotencyKey) {
+
+        // 재고 감소
+        StockResult stockResult = inventoryService.decreaseByOrderV2(productId, orderRequest.getOrderId(), orderRequest.getQuantity(), idempotencyKey);
 
         return ResponseEntity.ok(ApiSuccess.of(stockResult, null));
 

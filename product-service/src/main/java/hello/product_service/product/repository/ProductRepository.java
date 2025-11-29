@@ -1,9 +1,9 @@
 package hello.product_service.product.repository;
 
 import hello.product_service.product.domain.Product;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
+import jakarta.persistence.LockModeType;
+import jakarta.persistence.QueryHint;
+import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
@@ -14,4 +14,10 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Modifying
     @Query("UPDATE Product p SET p.stock = p.stock + :qty WHERE p.id=:productId")
     int increment(@Param("productId") Long productId, @Param("qty") int qty);
+
+    // 행 잠금 (SELECT ... FOR UPDATE)
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @QueryHints(@QueryHint(name = "jakarta.persistence.lock.timeout", value = "2000")) // ms
+    @Query("select p from Product p where p.id = :id")
+    Product findForUpdateWithTimeout(@Param("id") Long id);
 }
