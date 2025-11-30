@@ -61,10 +61,55 @@ PENDING --(decrease 성공)--> CONFIRMED --(취소)--> CANCELLED
 
 ## 에러 및 응답 규칙(요약)
 
-- 공통 오류 포맷: `{ "error": "INSUFFICIENT_STOCK", "message": "재고가 부족합니다." }`
+- 공통 오류 포맷: `{ "error": "INSUFFICIENT_STOCK", "message": "재고가 부족합니다.", "details": null }`
 - product-service:
     - 400: 재고 부족
     - 404: 상품 없음
+    - 503: 락 경합/타임아웃
 - order-service:
     - 400: 상태 전이 불가(예: PENDING 취소 시도)
     - 424: 상품 서비스 실패
+ 
+---
+
+## 주문 서버 Saga패턴 도입
+- 목적
+  - 주문 생성/취소 과정에서 주문 서버와 상품 서버 간 최종 일관성 확보
+  - 부분 실패 시 보상 트랜잭션으로 상태 복구
+  - 외부 의존 장애(5xx/타임아웃) 시 재시도 전략 적용
+ 
+- 핵심 설계
+  - 오케스트레이터 방식: OrderSagaOrchestrator
+  - 단계
+    - ✅ PENDING 주문 생성 (로컬 트랜잭션)
+    - ✅ 상품 서버에 재고 차감(DEC-{orderId}) 호출 (Idempotency-Key 포함)
+    - ✅ 성공 → 주문을 CONFIRMED로 전이
+    - ✅ 실패(업무 4xx) → 주문을 FAILED로 전이
+    - ❌ 장애(5xx/타임아웃) → 재시도 정책 (아직 구현 X)
+  - 보상(Compensation)
+    - 주문 도중 로컬 예외/알 수 없는 예외 발생 시 재고 증가(INC-{orderId}) 보상 호출
+    - 취소 실패 시 주문 상태는 스펙대로 CONFIRMED 유지
+- 추가하고 싶은 내용
+  - 이벤트 발행 방식 구현
+  - 현재 방식은 try - catch로 구현되어 있는데 외부 서비스가 많아질 경우 catch가 많아짐
+ 
+---
+
+## 상품 서버: DB 비관적 락(Pessimistic Lock) 도입
+- 목적
+  - 인기 상품에 대한 동시 차감 요청이 많을 때 감소 보장
+  - 원자성: 재고 차감 + 원장 기록(Stock Ledger) 같은 트랜잭션 보장
+- 핵심 설계
+  - JPA 비관락: @Lock(PESSIMISTIC_WRITE) + (옵션) @QueryHint(lock.timeout=...)
+  - 메서드 흐름 (decreaseByOrder V2)
+    - 멱등성 검사: requestId로 선조회(히트 시 이전 결과 반환)
+    - 행 잠금: SELECT ... FOR UPDATE
+    - 재고 차감: 엔티티 필드 변경
+    - 원장 기록: 같은 트랜잭션에서 저장
+    - 멱등성 저장: 성공만 저장(FAIL은 멱등 테이블에 기록하지 않음)
+  - 실패 정책
+    - 재고 부족 시 InsufficientStockException 즉시 반환(400 매핑)
+    - 락 타임아웃 시 503 응답으로 재시도 유도
+- 추가하고 싶은 내용
+  - 현재 구현 방식은 모든 상품에 대해 락을 걸고 재고 감소
+  - 인기 상품만 DB 락 사용하고 일반 상품은 갱신 + 검증 쿼리(update ... where id = :id and stock >= :qty)로 재고 감소
