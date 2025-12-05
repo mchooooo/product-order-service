@@ -1,4 +1,4 @@
-package hello.orders_service.order.service;
+package hello.orders_service.order.saga;
 
 import hello.orders_service.common.ApiSuccess;
 import hello.orders_service.order.client.ProductClient;
@@ -10,6 +10,7 @@ import hello.orders_service.order.exception.ApiException;
 import hello.orders_service.order.exception.DependencyFailedException;
 import hello.orders_service.order.exception.ErrorCode;
 import hello.orders_service.order.exception.client.ProductClientException;
+import hello.orders_service.order.service.OrderService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -19,13 +20,12 @@ import java.lang.reflect.Field;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 
 @ExtendWith(org.mockito.junit.jupiter.MockitoExtension.class)
-class OrderSagaOrchestratorTest {
+class OrderSagaOrchestratorTestV1 {
     @Mock
     ProductClient productClient;
     @Mock
@@ -76,7 +76,7 @@ class OrderSagaOrchestratorTest {
         when(orderService.createOrderPending(anyLong(), anyString(), anyInt())).thenReturn(order);
 
         // when
-        Order result = orchestrator.startOrder(10L, "buyer", 3);
+        Order result = orchestrator.startOrderV1(10L, "buyer", 3);
 
         // then
         assertThat(result.getStatus()).isEqualTo(OrderStatus.CONFIRMED);
@@ -103,7 +103,7 @@ class OrderSagaOrchestratorTest {
         when(orderService.failOrder(anyLong(), anyString())).thenReturn(order);
 
         // when
-        Order result = orchestrator.startOrder(10L, "buyer", 5);
+        Order result = orchestrator.startOrderV1(10L, "buyer", 5);
 
         // then
         assertThat(result.getStatus()).isEqualTo(OrderStatus.FAILED);
@@ -124,7 +124,7 @@ class OrderSagaOrchestratorTest {
 
 
         // when / then
-        assertThatThrownBy(() -> orchestrator.startOrder(10L, "buyer", 2))
+        assertThatThrownBy(() -> orchestrator.startOrderV1(10L, "buyer", 2))
             .isInstanceOf(DependencyFailedException.class);
 
 
@@ -150,7 +150,7 @@ class OrderSagaOrchestratorTest {
         when(orderService.failOrder(anyLong(), eq("COMPENSATED"))).thenReturn(order);
 
         // when
-        Order result = orchestrator.startOrder(10L, "buyer", 3);
+        Order result = orchestrator.startOrderV1(10L, "buyer", 3);
 
         // then
         assertThat(result.getStatus()).isEqualTo(OrderStatus.FAILED);
@@ -181,7 +181,7 @@ class OrderSagaOrchestratorTest {
             .thenReturn(new ApiSuccess<>(new StockResult(true, 100, "OK"), null));
 
         // when
-        Order result = orchestrator.startCancel(anyLong());
+        Order result = orchestrator.startCancelV1(anyLong());
 
         // then
         assertThat(result.getStatus()).isEqualTo(OrderStatus.CANCEL);
@@ -201,7 +201,7 @@ class OrderSagaOrchestratorTest {
             .thenThrow(new DependencyFailedException(null, "upstream", null, null));
 
         // when / then
-        assertThatThrownBy(() -> orchestrator.startCancel(anyLong()))
+        assertThatThrownBy(() -> orchestrator.startCancelV1(anyLong()))
             .isInstanceOf(DependencyFailedException.class);
 
         // 상태 전이 없음
@@ -221,7 +221,7 @@ class OrderSagaOrchestratorTest {
             .thenThrow(new ProductClientException(ErrorCode.PRODUCT_NOT_FOUND, "not found", null));
 
         // when
-        Order result = orchestrator.startCancel(1L);
+        Order result = orchestrator.startCancelV1(1L);
 
         // then
         assertThat(result.getStatus()).isEqualTo(OrderStatus.CONFIRMED);
@@ -243,7 +243,7 @@ class OrderSagaOrchestratorTest {
         when(orderService.cancelOrder(1L)).thenThrow(new ApiException(null, "cancel fail", null));
 
         // when
-        Order result = orchestrator.startCancel(1L);
+        Order result = orchestrator.startCancelV1(1L);
 
         // then
         // 보상(decrease) 호출이 일어났는지 확인

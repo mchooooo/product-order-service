@@ -105,6 +105,7 @@ public class InventoryService {
      * 고도화 아이디어 : 현재 코드는 모든 상품에 락이 걸림, 인기 있는 상품만 락을 걸 수 없을까?
      */
     public StockResult decreaseByOrderV2(Long productId, Long orderId, int quantity, String requestId) {
+        log.info("decrease by order call, product id = {}, order id = {}, quantity = {}, request id = {}", productId, orderId, quantity, requestId);
         IdempotencyRecord cached = idempotencyRepository.findByRequestId(requestId).orElse(null);
 
         if (cached != null) { //널이 아니면 기존에 존재
@@ -117,7 +118,7 @@ public class InventoryService {
         // 재고 감소
         findItem.decreaseStock(quantity); // 재고 부족 익셉션이 발생할 수 있음.
         StockResult stockResult = new StockResult(true, findItem.getStock(), "OK");
-
+        log.info("decrease stock result = {}", stockResult);
         // 재고 원장 저장 (성공한 아이템만)
         stockLedgerService.save(productId, Direction.OUT, quantity, orderId, requestId);
         // 멱등성 저장
