@@ -4,7 +4,7 @@
 - **목표**: 주문 서버(order-service)와 상품 서버(product-service)를 분리(MSA 입문)하여, 주문 생성/취소/조회와 상품 CRUD 및 주문에 따른 재고 증감 흐름을 구현한다.
 - **통신**: 동기 REST api (필수), 이후 단계에서 Kafka 등 비동기 확장 가능(선택).
 - **DB**: 서비스별 H2 DB(로컬) — 운영 단계에서 MySQL/Postgres 전환 권장.
-- **핵심 원칙**: 데이터베이스 분리, 멱등성(Idempotency).
+- **핵심 원칙**: 데이터베이스 분리, 멱등성(Idempotency), 주문 서버와 상품 서버의 상태 일관성(사가 패턴), 상품 재고 감소 보장.
 
 ---
 ## 엔티티 설계, API 명세
@@ -28,13 +28,6 @@
 - 주문 취소
 - 주문 조회
 
----
-
-## 비기능 요구사항
-
-- **멱등성**: 상품 서버가 `Idempotency-Key/requestId` 저장 → 동일 키 재요청 시 이전 결과 반환
-- **에러 매핑**: 5xx/재고부족 → 주문 `FAILED("PRODUCT_UNAVAILABLE", "INSUFFICIENT_STOCK" 등)`
-- **로깅**: 주문ID, requestId, 응답코드, 소요시간
 
 ---
 
@@ -84,14 +77,14 @@ PENDING --(decrease 성공)--> CONFIRMED --(취소)--> CANCELLED
     - ✅ PENDING 주문 생성 (로컬 트랜잭션)
     - ✅ 상품 서버에 재고 차감(DEC-{orderId}) 호출 (Idempotency-Key 포함)
     - ✅ 성공 → 주문을 CONFIRMED로 전이
-    - ✅ 실패(업무 4xx) → 주문을 FAILED로 전이
+    - ✅ 실패(상품 서버 4xx) → 주문을 FAILED로 전이
     - ❌ 장애(5xx/타임아웃) → 재시도 정책 (아직 구현 X)
   - 보상(Compensation)
-    - 주문 도중 로컬 예외/알 수 없는 예외 발생 시 재고 증가(INC-{orderId}) 보상 호출
+    - 주문 도중 예외/알 수 없는 예외(RuntimeException) 발생 시 재고 증가(INC-{orderId}) 보상 호출
     - 취소 실패 시 주문 상태는 스펙대로 CONFIRMED 유지
 - 추가하고 싶은 내용
   - 이벤트 발행 방식 구현
-  - 현재 방식은 try - catch로 구현되어 있는데 외부 서비스가 많아질 경우 catch가 많아짐
+
  
 ---
 
