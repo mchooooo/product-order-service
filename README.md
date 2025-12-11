@@ -87,22 +87,3 @@ PENDING --(decrease 성공)--> CONFIRMED --(취소)--> CANCELLED
 
  
 ---
-
-## 상품 서버: DB 비관적 락(Pessimistic Lock) 도입
-- 목적
-  - 인기 상품에 대한 동시 차감 요청이 많을 때 감소 보장
-  - 원자성: 재고 차감 + 원장 기록(Stock Ledger) 같은 트랜잭션 보장
-- 핵심 설계
-  - JPA 비관락: @Lock(PESSIMISTIC_WRITE) + (옵션) @QueryHint(lock.timeout=...)
-  - 메서드 흐름 (decreaseByOrder V2)
-    - 멱등성 검사: requestId로 선조회(히트 시 이전 결과 반환)
-    - 행 잠금: SELECT ... FOR UPDATE
-    - 재고 차감: 엔티티 필드 변경
-    - 원장 기록: 같은 트랜잭션에서 저장
-    - 멱등성 저장: 성공만 저장(FAIL은 멱등 테이블에 기록하지 않음)
-  - 실패 정책
-    - 재고 부족 시 InsufficientStockException 즉시 반환(400 매핑)
-    - 락 타임아웃 시 503 응답으로 재시도 유도
-- 추가하고 싶은 내용
-  - 현재 구현 방식은 모든 상품에 대해 락을 걸고 재고 감소
-  - 인기 상품만 DB 락 사용하고 일반 상품은 갱신 + 검증 쿼리(update ... where id = :id and stock >= :qty)로 재고 감소
