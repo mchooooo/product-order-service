@@ -2,6 +2,7 @@ package hello.product_service.product.service;
 
 import hello.product_service.product.domain.Product;
 import hello.product_service.product.exception.ProductNotFoundException;
+import hello.product_service.product.infra.redis.StockRedisManager;
 import hello.product_service.product.model.ProductCreateRequest;
 import hello.product_service.product.model.ProductDto;
 import hello.product_service.product.model.ProductSearchCondition;
@@ -22,6 +23,7 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final ProductSearchRepository searchRepository;
+    private final StockRedisManager stockRedisManager;
 
     @Transactional
     public Long create(ProductCreateRequest productCreateRequest) {
@@ -54,5 +56,18 @@ public class ProductService {
         Product findProduct = productRepository.findById(id).orElseThrow(() -> new ProductNotFoundException(id));
         findProduct.delete();
         return;
+    }
+
+    @Transactional
+    public int loadInitStockRedis(Long productId) {
+        // 1. DB에서 현재 재고 수량 조회
+        Product findProduct = productRepository.findById(productId).orElseThrow(() -> new ProductNotFoundException(productId));
+
+        int currentStock = findProduct.getStock();
+
+        // 2. StockRedisManager를 통해 Redis에 초기 재고 설정
+        stockRedisManager.initializeStock(productId, currentStock);
+
+        return currentStock;
     }
 }

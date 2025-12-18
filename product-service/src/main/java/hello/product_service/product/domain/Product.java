@@ -28,6 +28,9 @@ public class Product {
     @Enumerated(EnumType.STRING)
     private ProductStatus status;
 
+    @Enumerated(EnumType.STRING)
+    private StockStrategy stockStrategy;
+
     @CreationTimestamp
     @Column(updatable = false, nullable = false)
     private LocalDateTime createAt;
@@ -41,6 +44,23 @@ public class Product {
         this.price = price;
         this.stock = stock;
         this.status = status;
+    }
+
+    public Product(Long id, String name, int price, int stock, ProductStatus status, StockStrategy stockStrategy) {
+        this.id = id;
+        this.name = name;
+        this.price = price;
+        this.stock = stock;
+        this.status = status;
+        this.stockStrategy = stockStrategy;
+    }
+
+    public Product(String name, int price, int stock, ProductStatus status, StockStrategy stockStrategy) {
+        this.name = name;
+        this.price = price;
+        this.stock = stock;
+        this.status = status;
+        this.stockStrategy = stockStrategy;
     }
 
     public Product(Long id, String name, int price, int stock, ProductStatus status) {

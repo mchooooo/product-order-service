@@ -62,7 +62,7 @@ public class DecreaseStockAndConfirmStep implements SagaStep<OrderSagaContext> {
             throw SagaException.retryable("Upstream dependency failure", ex);
 
         } catch (ApiException ex) {
-            // --- 로컬 예외: 재고 감소는 성공했을 수 있어 보상 대상 ---
+            // --- 로컬 예외: 재고 감소는 성공했을 수 있음, 보상 대상 ---
             log.error("Local ApiException after DEC. orderId={}", orderId, ex);
             throw SagaException.compensate("Local ApiException after DEC", ex);
 

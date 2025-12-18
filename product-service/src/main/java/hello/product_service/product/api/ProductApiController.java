@@ -57,14 +57,11 @@ public class ProductApiController {
         return ResponseEntity.noContent().build();
     }
 
-    @PatchMapping("/{productId}/stock/v1/decrease-by-order")
+    @PatchMapping("/{productId}/stock/decrease-by-order")
     public ResponseEntity<ApiSuccess<StockResult>> decreaseByOrderV1(
         @PathVariable("productId") Long productId,
         @RequestBody OrderRequest orderRequest,
         @RequestHeader("Idempotency-Key") String idempotencyKey) {
-
-        // 상품 원장 기록
-        stockLedgerService.save(productId, Direction.OUT, orderRequest.getQuantity(), orderRequest.getOrderId(), idempotencyKey);
 
         // 재고 감소
         StockResult stockResult = inventoryService.decreaseByOrder(productId, orderRequest.getOrderId(), orderRequest.getQuantity(), idempotencyKey);
@@ -73,7 +70,8 @@ public class ProductApiController {
 
     }
 
-    @PatchMapping("/{productId}/stock/decrease-by-order")
+    @PatchMapping("/{productId}/stock/v2/decrease-by-order")
+    @Deprecated
     public ResponseEntity<ApiSuccess<StockResult>> decreaseByOrderV2(
         @PathVariable("productId") Long productId,
         @RequestBody OrderRequest orderRequest,

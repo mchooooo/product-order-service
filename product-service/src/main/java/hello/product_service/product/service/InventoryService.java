@@ -23,7 +23,7 @@ public class InventoryService {
     /**
      * decreaseByOrder V1
      * update 쿼리에서 (WHERE p.id=:productId AND p.stock >= :qty) 조건을 통해 갱신과 검증을 한 번에 수행 했으나 요청이 많아서 하나의 아이템에 다른 멱등성 키를 가지고 요청한 경우 방어 가능한가?
-     * 비관적 락 도입
+     * 트래픽이 많이 몰릴 것으로 예상되는 상품은 데이터베이스의 부하를 덜기 위한 Redis 도입
      */
     public StockResult decreaseByOrder(Long productId, Long orderId, int quantity, String requestId) {
         // 요청 아이디가 신규 값인지 조회
@@ -35,7 +35,7 @@ public class InventoryService {
 
         // 차감 시작 (비즈니스 로직)
         // todo : 동시 요청, 요청이 많을 경우 해결 법?,
-        // 힌트 : 디비 락?
+        // 힌트 : 레디스 도입
         int updated = productRepository.decrement(productId, quantity);
         StockResult stockResult = null;
         Product updatedProduct = productRepository.findById(productId).orElseThrow();
@@ -103,7 +103,12 @@ public class InventoryService {
      *                                                                  -> 재고 감소 성공 시 재고 원장, 멱등성 저장 후 StockResult 리턴
      *
      * 고도화 아이디어 : 현재 코드는 모든 상품에 락이 걸림, 인기 있는 상품만 락을 걸 수 없을까?
+     *
+     * DB 락 철회 :
+     * 인기 상품처럼 재고 감소 트래픽이 집중되는 환경에서 디비 락을 걸면 오히려 성능이 저하된다.
+     * 데이터베이스의 부하를 덜기 위해 Redis 도입 예정
      */
+    @Deprecated
     public StockResult decreaseByOrderV2(Long productId, Long orderId, int quantity, String requestId) {
         log.info("decrease by order call, product id = {}, order id = {}, quantity = {}, request id = {}", productId, orderId, quantity, requestId);
         IdempotencyRecord cached = idempotencyRepository.findByRequestId(requestId).orElse(null);

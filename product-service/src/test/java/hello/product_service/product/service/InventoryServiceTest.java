@@ -132,7 +132,7 @@ class InventoryServiceTest {
     @Test
     void 성공_재고차감_원장저장_멱등저장() {
         // given
-        Long productId = 1L;
+        Long productId = 2L;
         Long orderId = 1L;
         int qty = 3;
         String requestId = "TEST-1";
@@ -142,11 +142,11 @@ class InventoryServiceTest {
 
         // then
         assertThat(result.isSuccess()).isTrue();
-        assertThat(result.getRemainingStock()).isEqualTo(97);
+        assertThat(result.getRemainingStock()).isEqualTo(7);
 
         // DB 반영 확인
         Product after = productRepository.findById(productId).orElseThrow();
-        assertThat(after.getStock()).isEqualTo(97);
+        assertThat(after.getStock()).isEqualTo(7);
 
         // 원장 호출 확인
         verify(stockLedgerService, times(1))
@@ -155,7 +155,7 @@ class InventoryServiceTest {
         // 멱등 저장 확인
         IdempotencyRecord rec = idempotencyRepository.findByRequestId(requestId).orElseThrow();
         assertThat(rec.getStatus()).isEqualTo(IdempotencyStatus.SUCCESS);
-        assertThat(rec.getRemainingStock()).isEqualTo(97);
+        assertThat(rec.getRemainingStock()).isEqualTo(7);
     }
 
     @Test
@@ -223,7 +223,7 @@ class InventoryServiceTest {
     @Test
     void 재고부족시_예외_발생_원장_멱등저장_없음() {
         // given
-        Long productId = 1L;
+        Long productId = 2L;
         Long orderId = 4L;
         int qty = 500;
         String requestId = "TEST-4";
@@ -235,7 +235,7 @@ class InventoryServiceTest {
 
         // 재고 변경 없음
         Product after = productRepository.findById(productId).orElseThrow();
-        assertThat(after.getStock()).isEqualTo(100);
+        assertThat(after.getStock()).isEqualTo(10);
 
         // 원장 호출 없음
         verify(stockLedgerService, never())
