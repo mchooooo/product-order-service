@@ -102,4 +102,8 @@ public class Product {
             throw new InsufficientStockException(this.id, this.stock);
         }
     }
+
+    public void updateStockStrategy(StockStrategy stockStrategy) {
+        this.stockStrategy = stockStrategy;
+    }
 }

@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
     url = "${product.base-url}"
 )
 public interface ProductClient {
-    @PatchMapping("/products/{id}/stock/decrease-by-order")
+    @PatchMapping("/products/{id}/stock/v3/decrease-by-order")
     ApiSuccess<StockResult> decreaseByOrder(@PathVariable("id") Long productId,
                                @RequestBody StockAdjustByOrderRequest body,
                                @RequestHeader("Idempotency-Key") String idemKey);

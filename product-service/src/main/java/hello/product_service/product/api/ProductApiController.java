@@ -4,6 +4,7 @@ import hello.product_service.common.ApiSuccess;
 import hello.product_service.product.domain.Direction;
 import hello.product_service.product.model.*;
 import hello.product_service.product.service.InventoryService;
+import hello.product_service.product.service.InventoryServiceV2;
 import hello.product_service.product.service.ProductService;
 import hello.product_service.product.service.StockLedgerService;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ public class ProductApiController {
     private final ProductService productService;
     private final InventoryService inventoryService;
     private final StockLedgerService stockLedgerService;
+    private final InventoryServiceV2 inventoryServiceV2;
     @PostMapping
     public ResponseEntity<ApiSuccess<ProductDto>> create(@RequestBody ProductCreateRequest productDto) {
         Long createdId = productService.create(productDto);
@@ -57,7 +59,8 @@ public class ProductApiController {
         return ResponseEntity.noContent().build();
     }
 
-    @PatchMapping("/{productId}/stock/decrease-by-order")
+    @PatchMapping("/{productId}/stock/v1/decrease-by-order")
+    @Deprecated
     public ResponseEntity<ApiSuccess<StockResult>> decreaseByOrderV1(
         @PathVariable("productId") Long productId,
         @RequestBody OrderRequest orderRequest,
@@ -82,6 +85,17 @@ public class ProductApiController {
 
         return ResponseEntity.ok(ApiSuccess.of(stockResult, null));
 
+    }
+
+    @PatchMapping("/{productId}/stock/v3/decrease-by-order")
+    public ResponseEntity<ApiSuccess<StockResult>> decreaseByOrder(
+        @PathVariable("productId") Long productId,
+        @RequestBody OrderRequest orderRequest,
+        @RequestHeader("Idempotency-Key") String idempotencyKey) {
+        // 재고 감소
+        StockResult stockResult = inventoryServiceV2.decreaseByOrder(productId, orderRequest.getOrderId(), orderRequest.getQuantity(), idempotencyKey);
+
+        return ResponseEntity.ok(ApiSuccess.of(stockResult, null));
     }
 
     @PatchMapping("/{productId}/stock/increase-by-order")

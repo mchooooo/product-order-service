@@ -1,0 +1,35 @@
+
+
+services:
+  # Redis 서비스
+  redis:
+    image: redis:latest
+    container_name: redis-container
+    ports:
+      - "6379:6379"
+    networks:
+      - product-net
+
+  # 상품 서버 서비스
+  product-service:
+    build: .  # 현재 디렉토리의 Dockerfile을 사용하여 이미지 빌드
+    container_name: product-service-container
+    ports:
+      - "8081:8081"
+    environment:
+      # 중요: 로컬 호스트가 아닌 docker-compose의 서비스 이름 'redis'를 사용
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
+      # H2 메모리 DB 설정 (필요시 추가)
+#      - SPRING_DATASOURCE_URL=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
+#      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.h2.Driver
+#      - SPRING_DATASOURCE_USERNAME=sa
+#      - SPRING_DATASOURCE_PASSWORD=
+    depends_on:
+      - redis  # redis가 먼저 실행된 후 실행됨
+    networks:
+      - product-net
+
+networks:
+  product-net:
+    driver: bridge
