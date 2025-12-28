@@ -103,6 +103,6 @@ PENDING --(decrease 성공)--> CONFIRMED --(취소)--> CANCELLED
   - 사가 흐름을 그대로 유지하고 트래픽 대응
  
 - 향후 계획
-  - Redis + MQ 도입
-    - Redis에서 살아남은(선착순 성공한) 요청을 모두 DB로 즉시 보내지 않고
-    - MQ(Kafka)에 쌓아두고 product-service가 처리할 수 있는 속도대로 처리하도록 한다.
+  - Redis & RabbitMQ를 활용한 비동기 주문 결제 아키텍처 도입
+    - 비동기 메시징: RabbitMQ를 도입하여 주문-상품 서버 간 결합도를 낮추고 응답 속도 개선
+    - 재고 관리 최적화: Redis를 활용하여 재고 차감 및 동시성 제어
