@@ -19,8 +19,6 @@ spring:
         show_sql: true
         format_sql: true
 
-
-
   cloud:
     openfeign:
       okhttp:
@@ -33,6 +31,13 @@ spring:
             readTimeout: 3000
             loggerLevel: FULL        # NONE/BASIC/HEADERS/FULL
             error-decoder: hello.orders_service.order.client.exception.decoder.ProductErrorDecoder
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
 
 logging:
   level:

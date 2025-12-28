@@ -15,4 +15,14 @@ public class OrderSagaContext {
     private String incKey;  // INC-{orderId}
 
     private Order order;
+
+    public static OrderSagaContext from(Order order) {
+        OrderSagaContext context = new OrderSagaContext();
+        context.setProductId(order.getProductId());
+        context.setBuyerId(order.getBuyerId());
+        context.setQuantity(order.getQuantity());
+        context.setOrderId(order.getId());
+        context.setOrder(order);
+        return context;
+    }
 }

@@ -1,30 +1,37 @@
 package hello.orders_service.order.saga.step;
 
 import hello.orders_service.order.domain.Order;
+import hello.orders_service.order.domain.OrderStatus;
+import hello.orders_service.order.repository.OrderRepository;
 import hello.orders_service.order.saga.OrderSagaContext;
 import hello.orders_service.order.service.OrderService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.BDDMockito;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.lang.reflect.Field;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.BDDMockito.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class CreateOrderPendingStepTest {
     @Mock
     OrderService orderService;
+    @Mock
+    OrderRepository orderRepository;
 
     CreateOrderPendingStep step;
 
     @BeforeEach
     void init() {
-        step = new CreateOrderPendingStep(orderService);
+        step = new CreateOrderPendingStep(orderService, orderRepository);
     }
 
     private void setOrderId(Order order) throws NoSuchFieldException, IllegalAccessException {
@@ -61,14 +68,17 @@ class CreateOrderPendingStepTest {
     }
 
     @Test
-    void compensate는_NO_OP() {
+    void compensate는_주문상태_FAILED_갱신() throws NoSuchFieldException, IllegalAccessException {
         // given
-        OrderSagaContext ctx = new OrderSagaContext();
+        Order pending = Order.create(1L, "test", 3);
+        setOrderId(pending);
+        OrderSagaContext ctx = OrderSagaContext.from(pending);
+        given(orderRepository.findById(pending.getId())).willReturn(Optional.of(pending));
 
         // when
         step.compensate(ctx);
 
         // then
-        verifyNoInteractions(orderService);
+        assertThat(pending.getStatus()).isEqualTo(OrderStatus.FAILED);
     }
 }
