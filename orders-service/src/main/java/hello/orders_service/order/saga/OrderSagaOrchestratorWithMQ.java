@@ -1,5 +1,6 @@
 package hello.orders_service.order.saga;
 
+import hello.orders_service.order.domain.Order;
 import hello.orders_service.order.saga.step.CreateOrderPendingStep;
 import hello.orders_service.order.saga.step.RabbitMqStockDecreaseStep;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,7 @@ public class OrderSagaOrchestratorWithMQ {
      * 주문 사가 시작 : 주문 생성 -> 메시지 발행 -> 끝
      */
     @Transactional
-    public void runSaga(Long productId, String buyerId, int quantity) {
+    public Order runSaga(Long productId, String buyerId, int quantity) {
         log.info("Saga 시작 - 주문 ID: {}", buyerId);
         OrderSagaContext context = new OrderSagaContext();
         context.setProductId(productId);
@@ -36,6 +37,8 @@ public class OrderSagaOrchestratorWithMQ {
             createOrderPendingStep.compensate(context);
             throw e;
         }
+
+        return context.getOrder();
     }
 
 }
