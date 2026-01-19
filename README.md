@@ -59,12 +59,12 @@ PENDING --(decrease 성공)--> CONFIRMED --(취소)--> CANCELLED
 ## 상태 전이 규칙 V2
 
 ```smalltalk
-        (수신 성공: Redis 멱등성 통과)
+        
 PENDING -----(decrease 성공)----------> CONFIRMED
   │                                                                             
   │                                                                       
   ├----------(decrease 실패/에러)------> FAILED
-  │        (재고 부족 / 메시지 유실 등)                           
+  │        (재고 부족 / 상품 서버 에러등)                           
   │                                                                                                                                                                                     
   └--(중복 요청: 멱등성 확인)--> (이전 요청에 대한 상태 유지)               
 ```
