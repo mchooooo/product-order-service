@@ -129,9 +129,9 @@ PENDING -----(decrease 성공)----------> CONFIRMED
   - 응답 속도 저하: 주문 완료를 위해 상품 서버의 재고 차감 응답을 끝까지 기다려야 하므로 사용자 경험 저하.
  
 - 해결 방안
-  - RabbitMQ를 도입하여 서버 간 통신을 비동기(Asynchronous) 방식으로 구현.
-  - Event-Driven 아키텍처: 주문이 발생하면 OrderEvent를 발행(Publish)하고, 상품 서버는 이를 구독(Consume)하여 재고를 차감.
-  - 관심사 분리: 주문 서버는 '주문 수 접수'에만 집중하고, 재고 처리는 상품 서버의 책임으로 넘겨 결합도를 낮춤.
+  - RabbitMQ를 도입하여 서버 간 통신을 비동기 방식으로 구현.
+  - Event-Driven 아키텍처: 주문이 발생하면 StockDecreaseEvent를 발행(Publish)하고, 상품 서버는 이를 구독(Consume)하여 재고를 차감.
+  - 관심사 분리: 주문 서버는 주문 접수만 집중하고, 재고 처리는 상품 서버의 책임으로 넘겨 결합도를 낮춤.
  
 - 발생한 이슈
   - Docker 컨테이너 간 통신 문제 (Connection refused)
