@@ -31,16 +31,22 @@
 
 ---
 
-## 핵심 흐름 (시퀀스)
+## 핵심 흐름 V1 (OpenFeign 통신)
 
-1. `POST /orders` 수신 → 주문 `PENDING` 저장
-2. `PATCH /products/{id}/stock` 호출(멱등키=DEC-{orderId}, INC-{orderId})
-3. 응답이 `success=true` → 주문 `CONFIRMED`
-4. `success=false` 또는 오류 → 주문 `FAILED` + 사유 기록
+1. **주문 접수**: `POST /orders` 수신 → 주문 `PENDING` 저장
+2. **동기 통신(OpenFeign)**: `PATCH /products/{id}/stock` 호출(멱등키=DEC-{orderId}, INC-{orderId})
+3. **상태 확정**: 응답이 `success=true` → 주문 `CONFIRMED`, `success=false` 또는 오류 → 주문 `FAILED` + 사유 기록
+
+## 핵심 흐름 V2 (Redis + MQ)
+
+1. **주문 접수**: `POST /orders` 호출 시 주문을 `PENDING`으로 저장하고 즉시 응답합니다.
+2. **비동기 통신**: `RabbitMQ`를 통해 상품 서버로 재고 차감 이벤트를 발행합니다.
+3. **멱등성 보장**: 상품 서버는 멱등성 키를 사용하여 동일한 멱등성에 대한 중복 재고 차감을 방지합니다.
+4. **상태 확정**: 상품 서버로부터 처리 결과를 메시지로 수신하여 주문을 `CONFIRMED` 또는 `FAILED`로 전환합니다.
 
 ---
 
-## 상태 전이 규칙
+## 상태 전이 규칙 V1
 
 ```smalltalk
 PENDING --(decrease 성공)--> CONFIRMED --(취소)--> CANCELLED
@@ -49,6 +55,19 @@ PENDING --(decrease 성공)--> CONFIRMED --(취소)--> CANCELLED
 ```
 
 - 취소는 `CONFIRMED`에서만 허용. 취소 실패 시 주문은 `CONFIRMED` 유지
+
+## 상태 전이 규칙 V2
+
+```smalltalk
+        (수신 성공: Redis 멱등성 통과)
+PENDING -----(decrease 성공)----------> CONFIRMED
+  │                                                                             
+  │                                                                       
+  ├----------(decrease 실패/에러)------> FAILED
+  │        (재고 부족 / 메시지 유실 등)                           
+  │                                                                                                                                                                                     
+  └--(중복 요청: 멱등성 확인)--> (이전 요청에 대한 상태 유지)               
+```
 
 ---
 
@@ -102,7 +121,23 @@ PENDING --(decrease 성공)--> CONFIRMED --(취소)--> CANCELLED
   - 늦게 도착한 트래픽은 DB까지 요청이 가지 않음
   - 사가 흐름을 그대로 유지하고 트래픽 대응
  
-- 향후 계획
-  - Redis & RabbitMQ를 활용한 비동기 주문 결제 아키텍처 도입
-    - 비동기 메시징: RabbitMQ를 도입하여 주문-상품 서버 간 결합도를 낮추고 응답 속도 개선
-    - 재고 관리 최적화: Redis를 활용하여 재고 차감 및 동시성 제어
+---
+## Message Queue 도입 (비동기 재고 처리 시스템)
+
+- 도입 배경
+  - 시스템 결합도 증가: 상품 서버가 다운될 경우 주문 서버까지 영향을 받아 전체 서비스가 장애로 이어짐.
+  - 응답 속도 저하: 주문 완료를 위해 상품 서버의 재고 차감 응답을 끝까지 기다려야 하므로 사용자 경험 저하.
+ 
+- 해결 방안
+  - RabbitMQ를 도입하여 서버 간 통신을 비동기(Asynchronous) 방식으로 구현.
+  - Event-Driven 아키텍처: 주문이 발생하면 OrderEvent를 발행(Publish)하고, 상품 서버는 이를 구독(Consume)하여 재고를 차감.
+  - 관심사 분리: 주문 서버는 '주문 수 접수'에만 집중하고, 재고 처리는 상품 서버의 책임으로 넘겨 결합도를 낮춤.
+ 
+- 발생한 이슈
+  - Docker 컨테이너 간 통신 문제 (Connection refused)
+    - 문제: 도커 컨테이너 내부에서 RabbitMQ 호스트를 localhost로 인식하여 상품 서버가 연결에 실패하는 문제 발생.
+    - 해결: docker-compose.yml 내에 SPRING_RABBITMQ_HOST=rabbitmq 환경 변수를 주입하고, 도커 내부 브릿지 네트워크(product-net)를 통해 서비스 이름으로 통신하도록 개선.
+   
+  - Exchange-Queue 바인딩 및 메시지 유실 문제
+    - 문제: 주문 서버에서 메시지를 발행했으나 상품 서버의 리스너가 동작하지 않음. 확인 결과, 상품 서버에서 큐와 익스체인지를 연결하는 Binding 설정 시 사용한 Routing Key가 주문 서버의 발행 키와 일치하지 않아 메시지가 큐로 전달되지 않음.
+    - 해결: 일단 간단하게 주문 서버와 상품 서버 설정 값을 확인하고 맞춰줌. 많은 서버에서 mq를 사용한다면 공통 모듈을 만들어 관리하는 것을 생각해 볼 수 있음.
