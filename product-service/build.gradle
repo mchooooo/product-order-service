@@ -28,7 +28,10 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	// redis
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+	// MQ
+	implementation 'org.springframework.boot:spring-boot-starter-amqp'
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'com.h2database:h2'
 	annotationProcessor 'org.projectlombok:lombok'
@@ -46,6 +49,10 @@ dependencies {
 	// Redis용 Testcontainers 모듈
 	testImplementation 'org.testcontainers:junit-jupiter' // JUnit 5 통합
 	testImplementation("com.redis:testcontainers-redis")
+	// MQ test
+	testImplementation "org.testcontainers:rabbitmq:1.19.0"
+	// 비동기 테스트
+	testImplementation 'org.awaitility:awaitility'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 

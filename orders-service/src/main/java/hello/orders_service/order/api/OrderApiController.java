@@ -8,11 +8,13 @@ import hello.orders_service.order.saga.OrderSagaOrchestrator;
 import hello.orders_service.order.saga.OrderSagaOrchestratorWithMQ;
 import hello.orders_service.order.service.OrderService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 public class OrderApiController {
     private final OrderService orderService;
     private final OrderSagaOrchestrator orderSagaOrchestrator;
@@ -21,6 +23,7 @@ public class OrderApiController {
 
     @GetMapping("/orders/{orderId}")
     public ResponseEntity<ApiSuccess<OrderResponse>> findById(@PathVariable("orderId") Long orderId) {
+        log.info("주문 조회 요청, 주문 ID={}", orderId);
         Order findOrder = orderService.findById(orderId);
         OrderResponse response = OrderResponse.from(findOrder);
         ApiSuccess<OrderResponse> result = ApiSuccess.of(response, null);

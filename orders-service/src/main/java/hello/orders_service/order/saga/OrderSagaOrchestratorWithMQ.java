@@ -22,6 +22,7 @@ public class OrderSagaOrchestratorWithMQ {
     @Transactional
     public Order runSaga(Long productId, String buyerId, int quantity) {
         log.info("Saga 시작 - 주문 ID: {}", buyerId);
+        log.info("Context 생성 - product id: {}, buyer id: {}, quantity: {}", productId, buyerId, quantity);
         OrderSagaContext context = new OrderSagaContext();
         context.setProductId(productId);
         context.setBuyerId(buyerId);

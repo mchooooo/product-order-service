@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,7 +52,7 @@ public class OrderMessagingIntegrationTest {
     void setUp() {
         rabbitAdmin = new RabbitAdmin(rabbitTemplate);
         // Exchange 선언
-        DirectExchange exchange = new DirectExchange(OrderRabbitConfig.ORDER_RESULT_EXCHANGE);
+        TopicExchange exchange = new TopicExchange(OrderRabbitConfig.ORDER_RESULT_EXCHANGE);
         rabbitAdmin.declareExchange(exchange);
 
         // Queue 선언

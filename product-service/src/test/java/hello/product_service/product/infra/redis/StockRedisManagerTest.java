@@ -1,19 +1,17 @@
 package hello.product_service.product.infra.redis;
 
+import hello.product_service.product.infra.TestContainerInitializer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 
 
 @SpringBootTest
-@Testcontainers // Testcontainers 사용을 선언
-@ContextConfiguration(initializers = RedisTestContainerInitializer.class) // 초기화 클래스 지정
+@ContextConfiguration(initializers = TestContainerInitializer.class) // 초기화 클래스 지정
 class StockRedisManagerTest {
 
     @Autowired

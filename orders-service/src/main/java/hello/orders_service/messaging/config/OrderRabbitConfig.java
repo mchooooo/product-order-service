@@ -25,15 +25,22 @@ public class OrderRabbitConfig {
         return new TopicExchange(STOCK_REQUEST_EXCHANGE);
     }
 
+    // 💡 1. 결과를 받을 Exchange를 반드시 Bean으로 등록해야 합니다!
+    @Bean
+    public TopicExchange orderResultExchange() {
+        return new TopicExchange(ORDER_RESULT_EXCHANGE);
+    }
+
     @Bean
     public Queue orderResultQueue() {
         return new Queue(ORDER_RESULT_QUEUE);
     }
 
+    // 💡 2. 바인딩 시 위에서 선언한 Bean을 참조하도록 수정합니다.
     @Bean
-    public Binding bindingOrderResult() {
-        return BindingBuilder.bind(orderResultQueue())
-            .to(new TopicExchange(ORDER_RESULT_EXCHANGE))
+    public Binding bindingOrderResult(Queue orderResultQueue, TopicExchange orderResultExchange) {
+        return BindingBuilder.bind(orderResultQueue)
+            .to(orderResultExchange)
             .with(ORDER_RESULT_ROUTING_KEY);
     }
 

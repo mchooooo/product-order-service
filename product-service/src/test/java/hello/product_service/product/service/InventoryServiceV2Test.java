@@ -4,10 +4,9 @@ import hello.product_service.product.domain.Product;
 import hello.product_service.product.domain.ProductStatus;
 import hello.product_service.product.domain.StockStrategy;
 import hello.product_service.product.exception.InsufficientStockException;
-import hello.product_service.product.infra.redis.RedisTestContainerInitializer;
+import hello.product_service.product.infra.TestContainerInitializer;
 import hello.product_service.product.infra.redis.StockRedisManager;
 import hello.product_service.product.repository.ProductRepository;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,11 +20,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Testcontainers // Testcontainers 사용을 선언
-@ContextConfiguration(initializers = RedisTestContainerInitializer.class) // 초기화 클래스 지정
+@ContextConfiguration(initializers = TestContainerInitializer.class) // 초기화 클래스 지정
 class InventoryServiceV2Test {
 
     private static final int INITIAL_STOCK = 100;
