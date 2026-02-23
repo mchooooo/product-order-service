@@ -5,6 +5,7 @@ import hello.product_service.product.domain.IdempotencyStatus;
 import hello.product_service.product.domain.StockStrategy;
 import hello.product_service.product.exception.InsufficientStockException;
 import hello.product_service.product.infra.redis.StockRedisManager;
+import hello.product_service.product.infra.redis.StockRedisManagerV2;
 import hello.product_service.product.model.StockResult;
 import hello.product_service.product.repository.IdempotencyRepository;
 import hello.product_service.product.repository.ProductRepository;
@@ -23,7 +24,7 @@ import org.springframework.stereotype.Service;
 public class InventoryServiceV2 {
     private final ProductRepository productRepository;
     private final IdempotencyRepository idempotencyRepository;
-    private final StockRedisManager stockRedisManager;
+    private final StockRedisManagerV2 stockRedisManager;
     private final StockTxHandler stockTxHandler;
 
     /**
@@ -63,6 +64,14 @@ public class InventoryServiceV2 {
         // 1. Redis 재고 선점
         Long remainStock = stockRedisManager.reserveStock(productId, quantity);
         log.info("redis remaining stock = {}", remainStock);
+
+        // Redis 장애 폴백 발생 시 (서킷 오픈 포함)
+        if (remainStock == -999L) {
+            log.warn("Redis 장애로 인해 DB 직접 차감 모드로 전환합니다. productId: {}", productId);
+            // 일반 상품 로직과 동일하게 DB 단일 트랜잭션으로 처리
+            return stockTxHandler.finalizeStockDecreaseInDB(productId, quantity, orderId, requestId);
+        }
+
         if (remainStock == -1L) {
             // Redis 선점 실패
             throw new InsufficientStockException(productId, productRepository.findStockById(productId));

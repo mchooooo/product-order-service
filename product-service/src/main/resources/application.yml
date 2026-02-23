@@ -30,3 +30,17 @@ spring:
     port: 5672
     username: guest
     password: guest
+
+resilience4j.circuitbreaker.instances:
+      redisStockBreaker:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 5s
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        recordExceptions:
+          - org.springframework.data.redis.RedisSystemException
+          - org.springframework.dao.QueryTimeoutException
+          - org.springframework.data.redis.RedisConnectionFailureException
+          - io.lettuce.core.RedisException
