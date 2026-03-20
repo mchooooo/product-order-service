@@ -48,7 +48,7 @@ class RabbitMqStockDecreaseStepTest {
 
         StockDecreaseRequestEvent sentEvent = captor.getValue();
         assertThat(sentEvent.getOrderId()).isEqualTo(100L);
-        assertThat(sentEvent.getQty()).isEqualTo(2);
+        assertThat(sentEvent.getQuantity()).isEqualTo(2);
         assertThat(sentEvent.getRequestId()).isEqualTo("DEC-123");
     }
 

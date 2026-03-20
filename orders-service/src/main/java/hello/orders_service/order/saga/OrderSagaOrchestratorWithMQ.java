@@ -2,7 +2,7 @@ package hello.orders_service.order.saga;
 
 import hello.orders_service.order.domain.Order;
 import hello.orders_service.order.saga.step.CreateOrderPendingStep;
-import hello.orders_service.order.saga.step.RabbitMqStockDecreaseStep;
+import hello.orders_service.order.saga.step.SaveOutboxStep;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class OrderSagaOrchestratorWithMQ {
     private final CreateOrderPendingStep createOrderPendingStep;
-    private final RabbitMqStockDecreaseStep rabbitMqStockDecreaseStep;
+    private final SaveOutboxStep saveOutboxStep;
 
     /**
      * 주문 사가 시작 : 주문 생성 -> 메시지 발행 -> 끝
@@ -30,7 +30,8 @@ public class OrderSagaOrchestratorWithMQ {
 
         try {
             createOrderPendingStep.execute(context);
-            rabbitMqStockDecreaseStep.execute(context);
+            // outbox 저장만 수행 (실제 MQ 발행은 @Scheduled 퍼블리셔가 담당)
+            saveOutboxStep.execute(context);
             log.info("Saga 종료: 메시지 발행 완료");
         } catch (Exception e) {
             log.error("Saga 실패: 즉시 롤백 실행", e);
