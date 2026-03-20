@@ -143,7 +143,7 @@ PENDING -----(decrease 성공)----------> CONFIRMED
    
   - 트랜잭션 내 메시지 발행 문제 (Ghost Message 위험)
     - 문제: runSaga 메서드에 @Transactional이 붙어 있고, 그 안에서 rabbitTemplate.convertAndSend를 호출 -> 메시지가 브로커에 들어갔는데 DB 트랜잭션이 커밋되지 않는 케이스, DB 커밋됐는데 메시지 발행 실패 케이스
-    - 해결(구현중): Transactional Outbox 패턴을 도입 -> 메시지를 바로 쏘지 말고, DB에 OUTBOX 테이블을 만들어 주문과 같은 트랜잭션으로 저장한 뒤, 별도의 프로세스가 이를 읽어서 MQ로 던짐
+    - 해결: Transactional Outbox 패턴을 도입 -> 메시지를 바로 쏘지 말고, DB에 OUTBOX 테이블을 만들어 주문과 같은 트랜잭션으로 저장한 뒤, 별도의 프로세스가 이를 읽어서 MQ로 던짐
 
 - 다이어그램
 ```smalltalk
