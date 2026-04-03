@@ -141,6 +141,20 @@ public class OrderService {
     }
 
     /**
+     * outbox 발행 재시도 소진 시나리오에서 사용.
+     * 주문 상태가 PENDING일 때만 FAILED로 마감해, 이미 확정/취소된 주문을 덮어쓰지 않도록 한다.
+     */
+    @Transactional
+    public void failOrderIfPending(Long orderId, String message) {
+        Order findOrder = orderRepository.findById(orderId)
+            .orElseThrow(() -> new OrderNotFoundException(ErrorCode.ORDER_NOT_FOUND, ErrorCode.ORDER_NOT_FOUND.getMessage(), null, null));
+
+        if (findOrder.getStatus() == OrderStatus.PENDING) {
+            findOrder.failStatus(message);
+        }
+    }
+
+    /**
      * orderV2 상품 서버와 주문 서버의 일관성을 맞추기 위해 OrderSagaOrchestrator 도입
      */
     @Transactional

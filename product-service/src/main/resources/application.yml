@@ -38,7 +38,7 @@ resilience4j.circuitbreaker.instances:
         failureRateThreshold: 50
         waitDurationInOpenState: 5s
         minimumNumberOfCalls: 5
-        permittedNumberOfCallsInHalfOpenState: 3
+        permittedNumberOfCallsInHalfOpenState: 1
         recordExceptions:
           - org.springframework.data.redis.RedisSystemException
           - org.springframework.dao.QueryTimeoutException

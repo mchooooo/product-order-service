@@ -1,6 +1,7 @@
 package hello.orders_service.messaging.publisher;
 
 import hello.orders_service.messaging.config.OrderRabbitConfig;
+import hello.orders_service.order.service.OrderService;
 import hello.orders_service.order.service.OrderOutboxService;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
@@ -23,6 +24,7 @@ public class OrderOutboxPublisher {
     private final OrderOutboxRepository orderOutboxRepository;
     private final RabbitTemplate rabbitTemplate;
     private final OrderOutboxService orderOutboxService;
+    private final OrderService orderService;
 
     private static final int MAX_RETRY_COUNT = 5;
 
@@ -65,7 +67,17 @@ public class OrderOutboxPublisher {
 
             } catch (Exception e) {
                 log.error("Outbox 발행 실패. outboxId={}, orderId={}", outbox.getId(), outbox.getOrderId(), e);
+
+                // markFailed()로 retryCount가 1 증가하므로, 예측 nextRetryCount로 "소진 시점" 판단
+                int nextRetryCount = outbox.getRetryCount() + 1;
                 orderOutboxService.markFailed(outbox.getId());
+
+                // 재시도 소진 시 주문을 운영 가능 상태로 마감
+                if (nextRetryCount >= MAX_RETRY_COUNT) {
+                    orderService.failOrderIfPending(outbox.getOrderId(), "OUTBOX_RETRY_EXHAUSTED");
+                    log.error("Outbox retry exhausted. orderId={}, outboxId={}, nextRetryCount={}",
+                        outbox.getOrderId(), outbox.getId(), nextRetryCount);
+                }
             }
         }
     }
