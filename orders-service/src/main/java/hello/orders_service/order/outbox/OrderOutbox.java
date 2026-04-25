@@ -42,7 +42,14 @@ public class OrderOutbox {
     @Column(updatable = false, nullable = false)
     private LocalDateTime createdAt;
 
+    private LocalDateTime nextAttemptAt;
+
+    private LocalDateTime lastAttemptAt;
+
     private LocalDateTime sentAt;
+
+    @Column(length = 1000)
+    private String lastError;
 
     //== 생성 메서드 ==//
     public static OrderOutbox pending(Long orderId, String eventType, String payload) {
@@ -51,18 +58,36 @@ public class OrderOutbox {
         outbox.eventType = eventType;
         outbox.payload = payload;
         outbox.status = OutboxStatus.PENDING;
+        outbox.nextAttemptAt = LocalDateTime.now();
         return outbox;
     }
 
     public void markSent() {
         this.status = OutboxStatus.SENT;
         this.sentAt = LocalDateTime.now();
+        this.lastAttemptAt = this.sentAt;
+        this.nextAttemptAt = null;
+        this.lastError = null;
     }
 
-    public void markFailed() {
+    public void markFailed(String errorMessage, LocalDateTime nextAttemptAt) {
         this.status = OutboxStatus.FAILED;
         this.retryCount++;
+        this.lastAttemptAt = LocalDateTime.now();
+        this.lastError = errorMessage;
+        this.nextAttemptAt = nextAttemptAt;
     }
-    
-    
+
+    public void markDead(String errorMessage) {
+        this.status = OutboxStatus.DEAD;
+        this.lastAttemptAt = LocalDateTime.now();
+        this.lastError = errorMessage;
+        this.nextAttemptAt = null;
+    }
+
+    public void requeue() {
+        this.status = OutboxStatus.PENDING;
+        this.lastError = null;
+        this.nextAttemptAt = LocalDateTime.now();
+    }
 }

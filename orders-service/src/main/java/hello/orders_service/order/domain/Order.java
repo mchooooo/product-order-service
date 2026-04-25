@@ -65,5 +65,10 @@ public class Order {
         this.failReason = failReason;
     }
 
+    public void retryStatus() {
+        this.status = OrderStatus.PENDING;
+        this.failReason = null;
+    }
+
 
 }

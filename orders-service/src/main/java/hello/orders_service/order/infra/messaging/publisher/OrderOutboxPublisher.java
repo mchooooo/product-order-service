@@ -11,6 +11,7 @@ import hello.orders_service.order.repository.OrderOutboxRepository;
 import hello.orders_service.order.outbox.OrderOutbox;
 import hello.orders_service.order.outbox.OutboxStatus;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.amqp.core.MessageBuilder;
@@ -26,13 +27,15 @@ public class OrderOutboxPublisher {
     private final OrderService orderService;
 
     private static final int MAX_RETRY_COUNT = 5;
+    private static final int RETRY_DELAY_SECONDS = 30;
 
     // 5초마다 실행
     @Scheduled(fixedDelay = 5000)
     public void publishDueOutboxEvents() {
-        List<OrderOutbox> outboxes = orderOutboxRepository.findTop100ByStatusInAndRetryCountLessThanOrderByCreatedAtAsc(
+        List<OrderOutbox> outboxes = orderOutboxRepository.findTop100ByStatusInAndRetryCountLessThanAndNextAttemptAtLessThanEqualOrderByCreatedAtAsc(
             List.of(OutboxStatus.PENDING, OutboxStatus.FAILED),
-            MAX_RETRY_COUNT
+            MAX_RETRY_COUNT,
+            LocalDateTime.now()
         );
 
         if (outboxes.isEmpty()) {
@@ -65,15 +68,26 @@ public class OrderOutboxPublisher {
                 log.error("Outbox 발행 실패. outboxId={}, orderId={}", outbox.getId(), outbox.getOrderId(), e);
 
                 int nextRetryCount = outbox.getRetryCount() + 1;
-                orderOutboxService.markFailed(outbox.getId());
+                String errorMessage = trimErrorMessage(e);
 
                 if (nextRetryCount >= MAX_RETRY_COUNT) {
+                    orderOutboxService.markDead(outbox.getId(), errorMessage);
                     orderService.failOrderIfPending(outbox.getOrderId(), "OUTBOX_RETRY_EXHAUSTED");
                     log.error("Outbox retry exhausted. orderId={}, outboxId={}, nextRetryCount={}",
                         outbox.getOrderId(), outbox.getId(), nextRetryCount);
+                } else {
+                    LocalDateTime nextAttemptAt = LocalDateTime.now().plusSeconds((long) RETRY_DELAY_SECONDS * nextRetryCount);
+                    orderOutboxService.markFailed(outbox.getId(), errorMessage, nextAttemptAt);
                 }
             }
         }
     }
-}
 
+    private String trimErrorMessage(Exception e) {
+        String message = e.getMessage();
+        if (message == null || message.isBlank()) {
+            return e.getClass().getSimpleName();
+        }
+        return message.length() > 1000 ? message.substring(0, 1000) : message;
+    }
+}

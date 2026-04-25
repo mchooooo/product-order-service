@@ -7,6 +7,7 @@ import hello.product_service.product.service.InventoryServiceV2;
 import hello.product_service.product.infra.config.RabbitMqConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
@@ -17,7 +18,10 @@ public class StockDecreaseConsumer {
     private final InventoryServiceV2 inventoryService;
     private final StockResultProducer stockResultProducer;
 
-    @RabbitListener(queues = RabbitMqConfig.STOCK_REQUEST_QUEUE)
+    @RabbitListener(
+        queues = RabbitMqConfig.STOCK_REQUEST_QUEUE,
+        containerFactory = "stockRequestListenerContainerFactory"
+    )
     public void handleStockDecrease(StockDecreaseEvent event) {
         log.info("재고 차감 요청 수신 - 주문ID: {}, 상품ID: {}, 수량: {}", event.getOrderId(), event.getProductId(), event.getQuantity());
         try {
@@ -39,6 +43,7 @@ public class StockDecreaseConsumer {
         } catch (Exception e) {
             log.error("시스템 장애 - 주문ID: {}", event.getOrderId(), e);
             stockResultProducer.sendResult(new StockResultEvent(event.getOrderId(), false, "SYSTEM_ERROR"));
+            throw new AmqpRejectAndDontRequeueException("재고 차감 처리 실패 - DLQ 이동", e);
         }
     }
 

@@ -19,6 +19,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -57,9 +58,10 @@ class OrderOutboxPublisherTest {
         ReflectionTestUtils.setField(outbox, "id", outboxId);
         ReflectionTestUtils.setField(outbox, "status", OutboxStatus.PENDING);
 
-        when(orderOutboxRepository.findTop100ByStatusInAndRetryCountLessThanOrderByCreatedAtAsc(
+        when(orderOutboxRepository.findTop100ByStatusInAndRetryCountLessThanAndNextAttemptAtLessThanEqualOrderByCreatedAtAsc(
             eq(List.of(OutboxStatus.PENDING, OutboxStatus.FAILED)),
-            eq(5)
+            eq(5),
+            any(LocalDateTime.class)
         )).thenReturn(List.of(outbox));
 
         // when
@@ -79,7 +81,7 @@ class OrderOutboxPublisherTest {
         assertThat(new String(sentMessage.getBody(), StandardCharsets.UTF_8)).isEqualTo(payloadJson);
 
         verify(orderOutboxService, times(1)).markSent(outboxId);
-        verify(orderOutboxService, never()).markFailed(anyLong());
+        verify(orderOutboxService, never()).markFailed(anyLong(), anyString(), any(LocalDateTime.class));
     }
 
     @Test
@@ -89,9 +91,10 @@ class OrderOutboxPublisherTest {
         OrderOutbox outbox = OrderOutbox.pending(101L, "UNSUPPORTED_EVENT_TYPE", "{\"any\":\"json\"}");
         ReflectionTestUtils.setField(outbox, "id", outboxId);
 
-        when(orderOutboxRepository.findTop100ByStatusInAndRetryCountLessThanOrderByCreatedAtAsc(
+        when(orderOutboxRepository.findTop100ByStatusInAndRetryCountLessThanAndNextAttemptAtLessThanEqualOrderByCreatedAtAsc(
             eq(List.of(OutboxStatus.PENDING, OutboxStatus.FAILED)),
-            eq(5)
+            eq(5),
+            any(LocalDateTime.class)
         )).thenReturn(List.of(outbox));
 
         // when
@@ -99,8 +102,30 @@ class OrderOutboxPublisherTest {
 
         // then
         verify(rabbitTemplate, never()).send(anyString(), anyString(), any(Message.class));
-        verify(orderOutboxService, times(1)).markFailed(outboxId);
+        verify(orderOutboxService, times(1)).markFailed(eq(outboxId), anyString(), any(LocalDateTime.class));
         verify(orderOutboxService, never()).markSent(anyLong());
     }
-}
 
+    @Test
+    void 최대_재시도_도달_시_dead_전이와_주문실패처리() {
+        // given
+        Long outboxId = 3L;
+        OrderOutbox outbox = OrderOutbox.pending(102L, "UNSUPPORTED_EVENT_TYPE", "{\"any\":\"json\"}");
+        ReflectionTestUtils.setField(outbox, "id", outboxId);
+        ReflectionTestUtils.setField(outbox, "retryCount", 4);
+
+        when(orderOutboxRepository.findTop100ByStatusInAndRetryCountLessThanAndNextAttemptAtLessThanEqualOrderByCreatedAtAsc(
+            eq(List.of(OutboxStatus.PENDING, OutboxStatus.FAILED)),
+            eq(5),
+            any(LocalDateTime.class)
+        )).thenReturn(List.of(outbox));
+
+        // when
+        publisher.publishDueOutboxEvents();
+
+        // then
+        verify(orderOutboxService).markDead(eq(outboxId), anyString());
+        verify(orderService).failOrderIfPending(102L, "OUTBOX_RETRY_EXHAUSTED");
+        verify(orderOutboxService, never()).markFailed(eq(outboxId), anyString(), any(LocalDateTime.class));
+    }
+}
