@@ -1,11 +1,11 @@
 package hello.product_service.integration;
 
 import hello.product_service.product.infra.TestContainerInitializer;
+import hello.product_service.product.infra.config.RabbitMqConfig;
 import hello.product_service.product.infra.rabbitmq.StockResultProducer;
 import hello.product_service.product.infra.redis.StockRedisManager;
 import hello.product_service.product.model.event.StockDecreaseEvent;
 import hello.product_service.product.model.event.StockResultEvent;
-import hello.product_service.product.util.config.RabbitMqConfig;
 import org.awaitility.Awaitility;
 import org.junit.jupiter.api.Test;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;

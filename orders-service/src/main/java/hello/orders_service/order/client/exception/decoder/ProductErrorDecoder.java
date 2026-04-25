@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.Response;
 import feign.codec.ErrorDecoder;
-import hello.orders_service.common.ApiError;
+import hello.orders_service.common.web.response.ApiError;
 import hello.orders_service.order.exception.DependencyFailedException;
 import hello.orders_service.order.exception.ErrorCode;
 import hello.orders_service.order.exception.client.InsufficientStockException;

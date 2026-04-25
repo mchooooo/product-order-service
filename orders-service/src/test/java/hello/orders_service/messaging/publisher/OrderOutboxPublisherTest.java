@@ -1,10 +1,12 @@
 package hello.orders_service.messaging.publisher;
 
-import hello.orders_service.messaging.config.OrderRabbitConfig;
+import hello.orders_service.order.infra.config.OrderRabbitConfig;
+import hello.orders_service.order.infra.messaging.publisher.OrderOutboxPublisher;
 import hello.orders_service.order.outbox.OrderOutbox;
 import hello.orders_service.order.outbox.OutboxStatus;
 import hello.orders_service.order.repository.OrderOutboxRepository;
 import hello.orders_service.order.service.OrderOutboxService;
+import hello.orders_service.order.service.OrderService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,11 +37,14 @@ class OrderOutboxPublisherTest {
     @Mock
     private OrderOutboxService orderOutboxService;
 
+    @Mock
+    private OrderService orderService;
+
     private OrderOutboxPublisher publisher;
 
     @BeforeEach
     void setUp() {
-        this.publisher = new OrderOutboxPublisher(orderOutboxRepository, rabbitTemplate, orderOutboxService);
+        this.publisher = new OrderOutboxPublisher(orderOutboxRepository, rabbitTemplate, orderOutboxService, orderService);
     }
 
     @Test

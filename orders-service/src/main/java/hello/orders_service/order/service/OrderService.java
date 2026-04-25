@@ -1,7 +1,7 @@
 package hello.orders_service.order.service;
 
 import feign.FeignException;
-import hello.orders_service.common.ApiSuccess;
+import hello.orders_service.common.web.response.ApiSuccess;
 import hello.orders_service.order.client.ProductClient;
 import hello.orders_service.order.client.dto.StockAdjustByOrderRequest;
 import hello.orders_service.order.client.dto.StockResult;

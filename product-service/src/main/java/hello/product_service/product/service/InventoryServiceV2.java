@@ -4,7 +4,6 @@ import hello.product_service.product.domain.IdempotencyRecord;
 import hello.product_service.product.domain.IdempotencyStatus;
 import hello.product_service.product.domain.StockStrategy;
 import hello.product_service.product.exception.InsufficientStockException;
-import hello.product_service.product.infra.redis.StockRedisManager;
 import hello.product_service.product.infra.redis.StockRedisManagerV2;
 import hello.product_service.product.model.StockResult;
 import hello.product_service.product.repository.IdempotencyRepository;

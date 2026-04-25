@@ -1,6 +1,7 @@
 package hello.orders_service.messaging.consumer;
 
-import hello.orders_service.messaging.event.StockResultEvent;
+import hello.orders_service.order.infra.messaging.consumer.OrderResultConsumer;
+import hello.orders_service.order.infra.messaging.event.StockResultEvent;
 import hello.orders_service.order.domain.Order;
 import hello.orders_service.order.domain.OrderStatus;
 import hello.orders_service.order.repository.OrderRepository;

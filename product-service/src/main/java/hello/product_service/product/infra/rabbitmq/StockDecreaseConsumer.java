@@ -4,7 +4,7 @@ import hello.product_service.product.exception.InsufficientStockException;
 import hello.product_service.product.model.event.StockDecreaseEvent;
 import hello.product_service.product.model.event.StockResultEvent;
 import hello.product_service.product.service.InventoryServiceV2;
-import hello.product_service.product.util.config.RabbitMqConfig;
+import hello.product_service.product.infra.config.RabbitMqConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;

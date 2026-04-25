@@ -2,8 +2,8 @@ package hello.orders_service.order.saga.step;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import hello.orders_service.messaging.config.OrderRabbitConfig;
-import hello.orders_service.messaging.event.StockDecreaseRequestEvent;
+import hello.orders_service.order.infra.config.OrderRabbitConfig;
+import hello.orders_service.order.infra.messaging.event.StockDecreaseRequestEvent;
 import hello.orders_service.order.outbox.OrderOutbox;
 import hello.orders_service.order.repository.OrderOutboxRepository;
 import hello.orders_service.order.saga.OrderSagaContext;

@@ -1,7 +1,7 @@
 package hello.orders_service.order.saga.step;
 
-import hello.orders_service.messaging.config.OrderRabbitConfig;
-import hello.orders_service.messaging.event.StockDecreaseRequestEvent;
+import hello.orders_service.order.infra.config.OrderRabbitConfig;
+import hello.orders_service.order.infra.messaging.event.StockDecreaseRequestEvent;
 import hello.orders_service.order.saga.OrderSagaContext;
 import hello.orders_service.saga.SagaStep;
 import lombok.RequiredArgsConstructor;

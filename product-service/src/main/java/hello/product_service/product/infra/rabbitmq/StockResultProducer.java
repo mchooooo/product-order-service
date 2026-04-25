@@ -1,7 +1,7 @@
 package hello.product_service.product.infra.rabbitmq;
 
 import hello.product_service.product.model.event.StockResultEvent;
-import hello.product_service.product.util.config.RabbitMqConfig;
+import hello.product_service.product.infra.config.RabbitMqConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;

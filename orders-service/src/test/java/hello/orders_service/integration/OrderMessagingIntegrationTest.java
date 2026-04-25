@@ -1,7 +1,7 @@
 package hello.orders_service.integration;
 
-import hello.orders_service.messaging.config.OrderRabbitConfig;
-import hello.orders_service.messaging.event.StockResultEvent;
+import hello.orders_service.order.infra.config.OrderRabbitConfig;
+import hello.orders_service.order.infra.messaging.event.StockResultEvent;
 import hello.orders_service.order.domain.Order;
 import hello.orders_service.order.domain.OrderStatus;
 import hello.orders_service.order.repository.OrderRepository;
