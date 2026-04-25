@@ -8,7 +8,7 @@
 로컬 환경에서는 서비스별 H2 DB를 사용하고,
 서비스 간 통신은 버전에 따라 동기 REST(OpenFeign), 비동기 메시징(RabbitMQ)을 사용합니다.
 
-## 현재 구현 범위
+## 기능
 
 - 상품 CRUD
 - 주문 생성, 취소, 조회
@@ -31,7 +31,6 @@
 - Redis 기반 선감소 처리
 - RabbitMQ 소비 및 결과 이벤트 발행
 
-자세한 내용: [product-service/README.md](./product-service/README.md)
 
 ### orders-service
 
@@ -40,7 +39,6 @@
 - Outbox 저장 및 스케줄러 기반 메시지 발행
 - 실패 주문 재처리 및 Outbox 재발행 기능
 
-자세한 내용: [orders-service/README.md](./orders-service/README.md)
 
 ## 주문 처리 흐름
 
